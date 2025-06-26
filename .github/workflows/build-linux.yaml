@@ -1,21 +1,23 @@
 name: Build for Linux
 
 on:
+  push:
   workflow_dispatch:
-    branches: master
 
 jobs:
-  build:
+  build-ubuntu:
     runs-on: ubuntu-latest
-    container: ubuntu:18.04
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Install deps
         run: |
-          apt-get update -y
-          apt install -y software-properties-common
-          apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
-          apt install -y nodejs autoconf automake build-essential clang cmake execstack fakeroot g++-5 git libc-ares-dev libctemplate-dev libcurl4-openssl-dev libglib2.0-dev libgnome-keyring-dev libicu-dev libsasl2-dev libsasl2-modules libsasl2-modules-gssapi-mit libsecret-1-dev libssl-dev libnss3 libnss3-dev libtidy-dev libtool libxext-dev libxkbfile-dev libxml2-dev libxtst-dev rpm uuid-dev xvfb
+          sudo apt-get update -y
+          sudo apt install -y software-properties-common
+          sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
+          sudo apt install -y unzip nodejs autoconf automake build-essential clang cmake execstack fakeroot git libc-ares-dev libctemplate-dev libcurl4-openssl-dev libglib2.0-dev libicu-dev libsasl2-dev libsasl2-modules libsasl2-modules-gssapi-mit libsecret-1-dev libssl-dev libnss3 libnss3-dev libtidy-dev libtool libxext-dev libxkbfile-dev libxml2-dev libxtst-dev rpm uuid-dev xvfb
 
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -31,31 +33,26 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Setup AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
       - name: Lint
         run: npm run lint
 
       - name: Build
         run: DEBUG=electron-packager npm run build
 
-      - uses: snapcore/action-build@v1
-        id: build
-
-      - uses: snapcore/action-publish@v1
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+      - name: Upload Deb Artifact
+        uses: actions/upload-artifact@v4
         with:
-          snap: ${{ steps.build.outputs.snap }}
-          release: edge
+          name: Mailspring-Linux-Deb
+          path: app/dist/mailspring-*.deb
 
-      - name: Sync artifacts to S3 bucket
-        run: |
-          aws s3 sync app/dist/ "s3://mailspring-builds/client/$(git rev-parse --short HEAD)/osx" \
-            --acl public-read \
-            --exclude "*" --include *.zip
+      - name: Upload RPM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mailspring-Linux-RPM
+          path: app/dist/mailspring-*.rpm
+
+      - name: Upload Main Directory Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mailspring-Linux-x64
+          path: app/dist/mailspring-linux-x64
