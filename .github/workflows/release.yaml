@@ -21,6 +21,7 @@ jobs:
 
       - name: Zip all directories in artifacts
         run: |
+          ls -lR ./artifacts
           find ./artifacts -mindepth 1 -maxdepth 1 -type d | while read dir; do
             # 只压缩不是 .zip 结尾的目录
             if [ -d "$dir" ] && [[ ! "$dir" =~ \.zip$ ]]; then
@@ -33,7 +34,12 @@ jobs:
           done
 
       - name: List all files to upload
-        run: find ./artifacts -type f
+        run: |
+          if [ -d ./artifacts ]; then
+            find ./artifacts -type f
+          else
+            echo "No artifacts found, please make sure all build workflows have completed and uploaded artifacts."
+          fi
 
       - name: Create GitHub Release
         id: create_release
@@ -50,7 +56,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for file in $(find ./artifacts -type f); do
-            echo "Uploading $file"
-            gh release upload "${{ github.ref_name }}" "$file"
-          done 
+          if [ -d ./artifacts ]; then
+            for file in $(find ./artifacts -type f); do
+              echo "Uploading $file"
+              gh release upload "${{ github.ref_name }}" "$file"
+            done
+          else
+            echo "No artifacts found, skipping upload."
+          fi 
