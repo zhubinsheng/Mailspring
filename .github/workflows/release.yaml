@@ -17,12 +17,12 @@ jobs:
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          path: artifacts
 
       - name: Zip all directories in artifacts
         run: |
-          ls -lR ./artifacts
-          find ./artifacts -mindepth 1 -maxdepth 1 -type d | while read dir; do
+          ls -lR artifacts
+          find artifacts -mindepth 1 -maxdepth 1 -type d | while read dir; do
             # 只压缩不是 .zip 结尾的目录
             if [ -d "$dir" ] && [[ ! "$dir" =~ \.zip$ ]]; then
               zipname="${dir}.zip"
@@ -35,8 +35,8 @@ jobs:
 
       - name: List all files to upload
         run: |
-          if [ -d ./artifacts ]; then
-            find ./artifacts -type f
+          if [ -d artifacts ]; then
+            find artifacts -type f
           else
             echo "No artifacts found, please make sure all build workflows have completed and uploaded artifacts."
           fi
@@ -56,8 +56,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -d ./artifacts ]; then
-            for file in $(find ./artifacts -type f); do
+          if [ -d artifacts ]; then
+            for file in $(find artifacts -type f); do
               echo "Uploading $file"
               gh release upload "${{ github.ref_name }}" "$file"
             done
