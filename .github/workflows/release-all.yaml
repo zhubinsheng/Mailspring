@@ -52,11 +52,14 @@ jobs:
         with:
           name: Mailspring-Linux-RPM
           path: app/dist/mailspring-*.rpm
+      - name: Compress Main Directory
+        run: |
+          tar -czvf app/dist/mailspring-linux-x64.tar.gz -C app/dist mailspring-linux-x64
       - name: Upload Main Directory Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Mailspring-Linux-x64
-          path: app/dist/mailspring-linux-x64
+          path: app/dist/mailspring-linux-x64.tar.gz
 
   build-windows:
     runs-on: windows-latest
@@ -135,18 +138,6 @@ jobs:
         with:
           path: ./artifacts
           pattern: Mailspring-*
-      - name: Zip all directories in artifacts
-        run: |
-          ls -lR artifacts
-          find artifacts -mindepth 1 -maxdepth 1 -type d | while read dir; do
-            if [ -d "$dir" ] && [[ ! "$dir" =~ \.zip$ ]]; then
-              zipname="${dir}.zip"
-              echo "Zipping $dir to $zipname"
-              cd "$dir"
-              zip -r "../$(basename "$dir").zip" ./*
-              cd - > /dev/null
-            fi
-          done
       - name: List all files to upload
         run: |
           if [ -d artifacts ]; then
