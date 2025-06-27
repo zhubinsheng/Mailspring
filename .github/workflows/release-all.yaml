@@ -87,7 +87,8 @@ jobs:
         run: npm run build
       - name: Compress Windows Directory
         run: |
-          cd app/dist && zip -r mailspring-win32-x64.zip Mailspring-win32-x64
+          Compress-Archive -Path app/dist/Mailspring-win32-x64 -DestinationPath app/dist/mailspring-win32-x64.zip
+        shell: pwsh
       - name: Upload Windows Directory Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -117,16 +118,18 @@ jobs:
         run: npm run lint
       - name: Build
         run: DEBUG=electron-packager,electron-osx-sign,electron-notarize* npm run build
-      - name: Rename artifacts
+      - name: Upload AppleSilicon Artifact
         if: matrix.os == 'macos-latest'
-        run: |
-          mv app/dist/Mailspring.zip app/dist/Mailspring-AppleSilicon.zip
-      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mailspring-${{ matrix.os }}
-          path: |
-            app/dist/Mailspring*.zip
+          name: Mailspring-macos-AppleSilicon
+          path: app/dist/Mailspring-AppleSilicon.zip
+      - name: Upload Intel Artifact
+        if: matrix.os == 'macos-13'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mailspring-macos-Intel
+          path: app/dist/Mailspring-Intel.zip
 
   release:
     needs: [build-linux, build-windows, build-macos]
@@ -154,7 +157,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
 
           # Windows
-          cp artifacts/Mailspring-Windows-x64/mailspring-win32-x64.zip mailspring-${VERSION}-windows.exe
+          cp artifacts/Mailspring-Windows-x64/mailspring-win32-x64.zip mailspring-${VERSION}-windows.zip
 
           # Linux
           cp artifacts/Mailspring-Linux-x64/mailspring-linux-x64.tar.gz mailspring-${VERSION}-linux-x64.tar.gz
@@ -163,12 +166,12 @@ jobs:
 
           # macOS
           cp artifacts/Mailspring-macos-latest/Mailspring-AppleSilicon.zip mailspring-${VERSION}-macos-AppleSilicon.zip
-          cp artifacts/Mailspring-macos-13/Mailspring.zip mailspring-${VERSION}-macos-Intel.zip
+          cp artifacts/Mailspring-macos-13/Mailspring-Intel.zip mailspring-${VERSION}-macos-Intel.zip
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            mailspring-*-windows.exe
+            mailspring-*-windows.zip
             mailspring-*-linux-x64.tar.gz
             mailspring-*.rpm
             mailspring-*.deb
