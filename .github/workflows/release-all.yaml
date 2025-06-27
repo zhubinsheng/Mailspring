@@ -85,11 +85,14 @@ jobs:
         run: npm run lint
       - name: Build
         run: npm run build
-      - name: Upload EXE Artifact
+      - name: Compress Windows Directory
+        run: |
+          cd app/dist && zip -r mailspring-win32-x64.zip Mailspring-win32-x64
+      - name: Upload Windows Directory Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mailspring-Windows-Exe
-          path: app/dist/Mailspring-win32-x64/Mailspring.exe
+          name: Mailspring-Windows-x64
+          path: app/dist/mailspring-win32-x64.zip
 
   build-macos:
     strategy:
@@ -151,7 +154,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
 
           # Windows
-          cp artifacts/Mailspring-Windows-Exe/Mailspring.exe mailspring-${VERSION}-windows.exe
+          cp artifacts/Mailspring-Windows-x64/mailspring-win32-x64.zip mailspring-${VERSION}-windows.exe
 
           # Linux
           cp artifacts/Mailspring-Linux-x64/mailspring-linux-x64.tar.gz mailspring-${VERSION}-linux-x64.tar.gz
