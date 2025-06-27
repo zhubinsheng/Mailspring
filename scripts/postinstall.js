@@ -8,6 +8,7 @@ const rimraf = require('rimraf');
 const targz = require('targz');
 const { safeExec } = require('./utils/child-process-wrapper.js');
 const { execSync } = require('child_process');
+const { getGithubMailsyncURL, downloadAndExtractMailsyncArtifact } = require('./artifact-downloader');
 
 const appDependencies = require('../app/package.json').dependencies;
 const rootDependencies = require('../package.json').dependencies;
@@ -159,6 +160,21 @@ async function run() {
 
   // write the marker with the electron version
   fs.writeFileSync(cacheVersionPath, npmElectronTarget);
+
+  // 只在 GitHub Actions 环境下执行 artifact 下载和解压
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    console.log(`\n-- Downloading the last released version of Mailspring mailsync (via artifact-downloader) --`);
+    getGithubMailsyncURL((info) => {
+      downloadAndExtractMailsyncArtifact(info, (err) => {
+        if (!err) {
+          console.log('[artifact] mailsync artifact 下载和解压全部完成!');
+        } else {
+          console.error('[artifact] mailsync artifact 下载或解压失败:', err);
+        }
+      });
+    });
+    return;
+  }
 
   // if the user hasn't cloned the mailsync module, download
   // the binary for their operating system that was shipped to S3.
