@@ -147,6 +147,7 @@ jobs:
           fi
       - name: Prepare release assets
         run: |
+          ls -R artifacts
           VERSION="${GITHUB_REF_NAME#v}"
 
           # Windows
@@ -155,7 +156,7 @@ jobs:
           # Linux
           cp artifacts/Mailspring-Linux-x64/mailspring-linux-x64.tar.gz mailspring-${VERSION}-linux-x64.tar.gz
           cp artifacts/Mailspring-Linux-RPM/mailspring-*.rpm mailspring-${VERSION}.rpm
-          cp artifacts/Mailspring-Linux-DEB/mailspring-*.deb mailspring-${VERSION}.deb
+          cp artifacts/Mailspring-Linux-Deb/mailspring-*.deb mailspring-${VERSION}.deb
 
           # macOS
           cp artifacts/Mailspring-macos-latest/Mailspring-AppleSilicon.zip mailspring-${VERSION}-macos-AppleSilicon.zip
