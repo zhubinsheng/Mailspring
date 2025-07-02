@@ -8,7 +8,10 @@ import {
   TaskFactory,
   DatabaseStore,
   FocusedPerspectiveStore,
+  Task,
 } from 'mailspring-exports';
+import DatabaseObjectRegistry from '../../../src/registries/database-object-registry';
+import * as Attributes from '../../../src/flux/attributes';
 
 type TemplateItem =
   | {
@@ -17,10 +20,121 @@ type TemplateItem =
   }
   | { type: 'separator' };
 
+// 定义并注册 InsertAiMessageTask
+class InsertAiMessageTask extends Task {
+  static modelName = 'InsertAiMessageTask';
+  static attributes = {
+    ...Task.attributes,
+    payload: Attributes.Object({ modelKey: 'payload' }),
+  };
+  constructor(data: any = {}) {
+    super(data);
+  }
+}
+DatabaseObjectRegistry.register('InsertAiMessageTask', () => InsertAiMessageTask);
+
+// 定义并注册 UpdateAiMessageTask
+class UpdateAiMessageTask extends Task {
+  static modelName = 'UpdateAiMessageTask';
+  static attributes = {
+    ...Task.attributes,
+    id: Attributes.String({ modelKey: 'id' }),
+    content: Attributes.String({ modelKey: 'content' }),
+    isUnread: Attributes.Number({ modelKey: 'isUnread' }),
+  };
+  id: string;
+  content: string;
+  isUnread: number;
+  constructor(data: any = {}) {
+    super(data);
+    this.id = data.id;
+    this.content = data.content;
+    this.isUnread = data.isUnread;
+    this.accountId = data.accountId;
+    this.source = data.source;
+  }
+}
+DatabaseObjectRegistry.register('UpdateAiMessageTask', () => UpdateAiMessageTask);
+
+// 定义并注册 DeleteAiMessageTask
+class DeleteAiMessageTask extends Task {
+  static modelName = 'DeleteAiMessageTask';
+  static attributes = {
+    ...Task.attributes,
+    id: Attributes.String({ modelKey: 'id' }),
+  };
+  id: string;
+  constructor(data: any = {}) {
+    super(data);
+    this.id = data.id;
+    this.accountId = data.accountId;
+    this.source = data.source;
+  }
+}
+DatabaseObjectRegistry.register('DeleteAiMessageTask', () => DeleteAiMessageTask);
+
+// 定义并注册 InsertAiChatSessionTask
+class InsertAiChatSessionTask extends Task {
+  static modelName = 'InsertAiChatSessionTask';
+  static attributes = {
+    ...Task.attributes,
+    userId: Attributes.String({ modelKey: 'userId' }),
+    title: Attributes.String({ modelKey: 'title' }),
+  };
+  userId: string;
+  title: string;
+  constructor(data: any = {}) {
+    super(data);
+    this.userId = data.userId;
+    this.title = data.title;
+    this.accountId = data.accountId;
+    this.source = data.source;
+  }
+}
+DatabaseObjectRegistry.register('InsertAiChatSessionTask', () => InsertAiChatSessionTask);
+
+// 定义并注册 UpdateAiChatSessionTask
+class UpdateAiChatSessionTask extends Task {
+  static modelName = 'UpdateAiChatSessionTask';
+  static attributes = {
+    ...Task.attributes,
+    id: Attributes.String({ modelKey: 'id' }),
+    title: Attributes.String({ modelKey: 'title' }),
+  };
+  id: string;
+  title: string;
+  constructor(data: any = {}) {
+    super(data);
+    this.id = data.id;
+    this.title = data.title;
+    this.accountId = data.accountId;
+    this.source = data.source;
+  }
+}
+DatabaseObjectRegistry.register('UpdateAiChatSessionTask', () => UpdateAiChatSessionTask);
+
+// 定义并注册 DeleteAiChatSessionTask
+class DeleteAiChatSessionTask extends Task {
+  static modelName = 'DeleteAiChatSessionTask';
+  static attributes = {
+    ...Task.attributes,
+    id: Attributes.String({ modelKey: 'id' }),
+  };
+  id: string;
+  constructor(data: any = {}) {
+    super(data);
+    this.id = data.id;
+    this.accountId = data.accountId;
+    this.source = data.source;
+  }
+}
+DatabaseObjectRegistry.register('DeleteAiChatSessionTask', () => DeleteAiChatSessionTask);
+
 export default class ThreadListContextMenu {
   threadIds: string[];
   accountIds: string[];
   threads?: Thread[];
+  data: any;
 
   constructor({ threadIds = [], accountIds = [] }) {
     this.threadIds = threadIds;
@@ -47,6 +161,93 @@ export default class ThreadListContextMenu {
           this.starItem(),
           { type: 'separator' },
           this.createMailboxLinkItem(),
+          // AI Chat Test Buttons
+          {
+            label: '测试AI消息插入',
+            click: () => {
+              const task = new InsertAiMessageTask({
+                accountId: this.accountIds[0],
+                payload: {
+                  sessionId: 'test-session-id',
+                  role: 'user',
+                  content: '这是一条AI测试消息',
+                  isUnread: 1,
+                },
+                source: 'ThreadListContextMenuTest',
+              });
+              Actions.queueTask(task);
+            },
+          },
+          {
+            label: '测试AI消息更新',
+            click: () => {
+              const task = new UpdateAiMessageTask({
+                accountId: this.accountIds[0],
+                payload: {
+                  id: 'local-c0fa93ac-018a',
+                  content: 'AI消息已更新',
+                  isUnread: 0,
+                },
+                source: 'ThreadListContextMenuTest',
+              });
+              Actions.queueTask(task);
+            },
+          },
+          {
+            label: '测试AI消息删除',
+            click: () => {
+              const task = new DeleteAiMessageTask({
+                accountId: this.accountIds[0],
+                payload: {
+                  id: 'test-msg-id',
+                },
+                source: 'ThreadListContextMenuTest',
+              });
+              Actions.queueTask(task);
+            },
+          },
+          // AI ChatSession Test Buttons
+          {
+            label: '测试AI会话插入',
+            click: () => {
+              const task = new InsertAiChatSessionTask({
+                accountId: this.accountIds[0],
+                payload: {
+                  userId: 'test-user-id',
+                  title: '测试会话',
+                },
+                source: 'ThreadListContextMenuTest',
+              });
+              Actions.queueTask(task);
+            },
+          },
+          {
+            label: '测试AI会话更新',
+            click: () => {
+              const task = new UpdateAiChatSessionTask({
+                accountId: this.accountIds[0],
+                payload: {
+                  id: '4myKRzLykB7vG143FNLqESeA5szg3gbTqxt8W4u7',
+                  title: '会话标题已更新',
+                },
+                source: 'ThreadListContextMenuTest',
+              });
+              Actions.queueTask(task);
+            },
+          },
+          {
+            label: '测试AI会话删除',
+            click: () => {
+              const task = new DeleteAiChatSessionTask({
+                accountId: this.accountIds[0],
+                payload: {
+                  id: 'test-session-id',
+                },
+                source: 'ThreadListContextMenuTest',
+              });
+              Actions.queueTask(task);
+            },
+          },
         ]);
       })
       .then(menuItems => {
